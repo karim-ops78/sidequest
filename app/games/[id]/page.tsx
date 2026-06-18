@@ -84,9 +84,12 @@ export default async function GamePage({
             <h2 className="text-xs font-medium uppercase tracking-widest text-subtle">
               Session history
             </h2>
-            <button className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-sm font-medium transition-colors hover:border-border-strong">
+            <Link
+              href={`/games/${game.id}/log`}
+              className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-sm font-medium transition-colors hover:border-border-strong"
+            >
               + Log a session
-            </button>
+            </Link>
           </div>
 
           {game.sessions.length === 0 ? (

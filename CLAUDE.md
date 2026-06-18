@@ -25,9 +25,17 @@ Dark-first. Fond `#0a0a0b`, surfaces `#141416`, bordures `#232326`, accent viole
 - `app/page.tsx` — landing
 - `app/dashboard/` — Library
 - `app/games/[id]/` — fiche jeu + Resume My Game + timeline sessions
+- `app/games/[id]/log/` — Log a session (notes ou screenshot → recap IA) + Server Actions
 - `app/profile/` — stats + "What to play this weekend" (recommander)
-- `components/` — nav, game-bits, recommender
+- `app/connect/` — import Steam (SteamID manuel, fallback démo)
+- `components/` — nav, game-bits, recommender, steam-connect, session-logger
 - `lib/seed.ts` — données fictives (à remplacer par Supabase)
+- `lib/steam.ts` — client Steam Web API (server-only, fallback mock sans clé)
+- `lib/ai.ts` — Claude (`claude-opus-4-8`) : recap de session + analyse screenshot vision, structured outputs Zod, server-only
+
+## Clés (.env.local, gitignored)
+- `ANTHROPIC_API_KEY` — active les recaps IA et l'analyse de screenshot (sinon message "AI not configured").
+- `STEAM_API_KEY` — active l'import Steam réel (sinon mode démo).
 
 ## Conventions
 - Français casual avec Karim. App en anglais.
