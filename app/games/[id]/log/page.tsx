@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { TopNav } from "@/components/nav";
 import { SessionLogger } from "@/components/session-logger";
 import { getGame } from "@/lib/seed";
-import { hasAiKey } from "@/lib/ai";
+import { aiMode } from "@/lib/ai";
 
 export default async function LogSessionPage({
   params,
@@ -33,11 +33,7 @@ export default async function LogSessionPage({
         </p>
 
         <div className="mt-8">
-          <SessionLogger
-            gameId={game.id}
-            gameName={game.name}
-            aiEnabled={hasAiKey()}
-          />
+          <SessionLogger gameId={game.id} gameName={game.name} mode={aiMode()} />
         </div>
       </main>
     </>

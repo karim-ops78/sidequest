@@ -3,46 +3,48 @@
 import { useActionState, useState } from "react";
 import { recapAction, screenshotAction } from "@/app/games/[id]/log/actions";
 
-type Mode = "notes" | "screenshot";
+type Tab = "notes" | "screenshot";
+type AiMode = "gemini" | "anthropic" | "mock";
 
 export function SessionLogger({
   gameId,
   gameName,
-  aiEnabled,
+  mode,
 }: {
   gameId: string;
   gameName: string;
-  aiEnabled: boolean;
+  mode: AiMode;
 }) {
-  const [mode, setMode] = useState<Mode>("notes");
+  const [tab, setTab] = useState<Tab>("notes");
 
   return (
     <div className="space-y-6">
-      {!aiEnabled && (
+      {mode === "mock" && (
         <div className="flex items-start gap-3 rounded-xl border border-amber/30 bg-amber/5 p-4 text-sm text-amber">
           <span className="mt-0.5">⚠️</span>
           <p>
-            <strong>AI not configured.</strong> Add{" "}
-            <code className="font-mono">ANTHROPIC_API_KEY</code> to{" "}
-            <code className="font-mono">.env.local</code> and restart the dev
-            server to generate real recaps.
+            <strong>Demo mode — simulated AI.</strong> Recaps are templated and
+            screenshots aren&apos;t actually read. Add a{" "}
+            <strong>free Gemini key</strong> (aistudio.google.com) as{" "}
+            <code className="font-mono">GEMINI_API_KEY</code> in{" "}
+            <code className="font-mono">.env.local</code> for real, free AI.
           </p>
         </div>
       )}
 
       <div className="inline-flex rounded-xl border border-border bg-elevated p-1">
-        <TabButton active={mode === "notes"} onClick={() => setMode("notes")}>
+        <TabButton active={tab === "notes"} onClick={() => setTab("notes")}>
           ✶ From notes
         </TabButton>
         <TabButton
-          active={mode === "screenshot"}
-          onClick={() => setMode("screenshot")}
+          active={tab === "screenshot"}
+          onClick={() => setTab("screenshot")}
         >
           ◳ From screenshot
         </TabButton>
       </div>
 
-      {mode === "notes" ? (
+      {tab === "notes" ? (
         <NotesForm gameId={gameId} gameName={gameName} />
       ) : (
         <ScreenshotForm gameId={gameId} gameName={gameName} />
@@ -86,6 +88,7 @@ function NotesForm({ gameId, gameName }: { gameId: string; gameName: string }) {
           whatIDid={state.whatIDid}
           whereIStopped={state.whereIStopped}
           nextObjective={state.nextObjective}
+          demo={state.demo}
         />
       )}
     </div>
@@ -159,6 +162,7 @@ function ScreenshotForm({
               {state.detectedType}
             </span>
             <h3 className="text-sm font-semibold">Detected screen</h3>
+            {state.demo && <DemoBadge />}
           </div>
           {state.extracted.length > 0 && (
             <ul className="mt-4 space-y-2">
@@ -183,16 +187,21 @@ function RecapCard({
   whatIDid,
   whereIStopped,
   nextObjective,
+  demo,
 }: {
   whatIDid: string;
   whereIStopped: string;
   nextObjective: string;
+  demo?: boolean;
 }) {
   return (
     <div className="card glow-border p-6">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-accent-soft">
-        Generated recap
-      </h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-accent-soft">
+          Generated recap
+        </h3>
+        {demo && <DemoBadge />}
+      </div>
       <dl className="mt-4 grid gap-4 sm:grid-cols-3">
         <Field label="What I did" value={whatIDid} />
         <Field label="Where I stopped" value={whereIStopped} />
@@ -223,6 +232,14 @@ function Field({
         {value}
       </dd>
     </div>
+  );
+}
+
+function DemoBadge() {
+  return (
+    <span className="rounded-full border border-amber/30 bg-amber/10 px-2 py-0.5 text-[11px] font-medium text-amber">
+      Demo
+    </span>
   );
 }
 
