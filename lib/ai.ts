@@ -133,6 +133,12 @@ export async function analyzeScreenshot(input: {
 function aiErrorMessage(e: unknown): string {
   if (e instanceof Anthropic.AuthenticationError) return "Invalid ANTHROPIC_API_KEY.";
   if (e instanceof Anthropic.RateLimitError) return "Rate limited — wait a moment and try again.";
-  if (e instanceof Anthropic.APIError) return `AI request failed (${e.status}). Try again.`;
+  if (e instanceof Anthropic.APIError) {
+    const msg = String(e.message ?? "").toLowerCase();
+    if (msg.includes("credit") || msg.includes("billing")) {
+      return "Your Anthropic account is out of credit. Add credit at console.anthropic.com → Billing, then try again.";
+    }
+    return `AI request failed (${e.status}). Try again.`;
+  }
   return "Something went wrong generating the recap.";
 }
