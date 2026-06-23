@@ -1,0 +1,143 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
+import {
+  computeBacklogStats,
+  loadLibrary,
+  SAMPLE_LIBRARY,
+  type StoredGame,
+} from "@/lib/library";
+import { getRoast } from "@/app/roast/actions";
+import type { BacklogStats, Roast } from "@/lib/ai";
+
+export function BacklogRoast() {
+  const [library, setLibrary] = useState<StoredGame[]>([]);
+  const [isSample, setIsSample] = useState(true);
+  const [stats, setStats] = useState<BacklogStats | null>(null);
+
+  const [roast, setRoast] = useState<Roast | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const lib = loadLibrary();
+    const resolved = lib ?? SAMPLE_LIBRARY;
+    setLibrary(resolved);
+    setIsSample(!lib);
+    setStats(computeBacklogStats(resolved));
+  }, []);
+
+  function run() {
+    if (!stats) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await getRoast(stats);
+      if (res.ok) setRoast(res.roast);
+      else setError(res.error);
+    });
+  }
+
+  if (!stats) return null;
+
+  const pctUnplayed = stats.total
+    ? Math.round((stats.neverPlayed / stats.total) * 100)
+    : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="card p-6">
+        <h1 className="text-xl font-semibold tracking-tight">
+          Roast my backlog
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Brace yourself. The AI is about to judge your{" "}
+          {isSample ? "(sample) " : ""}library.
+        </p>
+        <p className="mt-2 font-mono text-xs text-subtle">
+          {isSample ? (
+            <>
+              Using a sample library ·{" "}
+              <Link href="/connect" className="text-accent-soft hover:underline">
+                roast your real one
+              </Link>
+            </>
+          ) : (
+            <>Analysing your {stats.total} games</>
+          )}
+        </p>
+
+        <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat value={String(stats.total)} label="Games owned" />
+          <Stat value={String(stats.played)} label="Actually played" />
+          <Stat value={`${pctUnplayed}%`} label="Never launched" accent />
+          <Stat value={`${stats.totalHours}h`} label="Total hours" />
+        </section>
+
+        <button
+          onClick={run}
+          disabled={pending}
+          className="mt-6 w-full rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(124,92,255,0.4)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+        >
+          {pending ? "Sharpening jokes…" : roast ? "Roast me again 🔥" : "Roast me 🔥"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="card border-amber/30 bg-amber/5 p-4 text-sm text-amber">
+          {error}
+        </div>
+      )}
+
+      {roast && (
+        <div className="card glow-border space-y-4 p-6">
+          <p className="text-lg font-semibold leading-snug">
+            “{roast.verdict}”
+          </p>
+          <ul className="space-y-2.5">
+            {roast.lines.map((line, i) => (
+              <li key={i} className="flex gap-2.5 text-sm leading-6 text-muted">
+                <span className="text-accent-soft">🔥</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="border-t border-border pt-4 text-sm italic text-subtle">
+            {roast.redemption}
+          </p>
+          <div className="flex justify-end">
+            <Link
+              href="/play"
+              className="text-xs text-accent-soft hover:underline"
+            >
+              Okay okay — just tell me what to play →
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string;
+  label: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-background p-4">
+      <p
+        className={`font-mono text-2xl font-semibold tracking-tight ${
+          accent ? "text-accent-soft" : ""
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-subtle">{label}</p>
+    </div>
+  );
+}

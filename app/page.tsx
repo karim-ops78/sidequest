@@ -3,19 +3,19 @@ import { Logo } from "@/components/nav";
 
 const FEATURES = [
   {
-    title: "Session Recap",
-    body: "Drop a few notes or a screenshot after playing. The AI writes what you did, where you stopped, and your likely next objective.",
+    title: "Tell it your vibe",
+    body: "Pick how much time you have and your mood — or just type it: “cozy but a little tense”. SideQuest gets the nuance.",
+    icon: "◐",
+  },
+  {
+    title: "It knows your library",
+    body: "Connect Steam and the AI reasons across your whole backlog — playtime, genre fit, the games you keep meaning to start.",
     icon: "✶",
   },
   {
-    title: "Resume My Game",
-    body: "Coming back after weeks? Get an instant briefing of your current state, open objectives, and how to jump back in.",
-    icon: "↺",
-  },
-  {
-    title: "Screenshot Analysis",
-    body: "Upload a menu, map, quest log or inventory. Vision AI reads it, extracts what matters, then discards the image. Summaries only.",
-    icon: "◳",
+    title: "One game, with the why",
+    body: "No more scrolling. You get the single best game to launch right now, two backups, and a clear reason for each.",
+    icon: "▶",
   },
 ];
 
@@ -25,14 +25,14 @@ export default function Home() {
       <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5">
         <Logo />
         <div className="flex items-center gap-3 text-sm">
-          <Link href="/dashboard" className="text-muted hover:text-foreground">
-            Sign in
+          <Link href="/play" className="text-muted hover:text-foreground">
+            Try it
           </Link>
           <Link
-            href="/dashboard"
+            href="/connect"
             className="rounded-lg bg-foreground px-3.5 py-1.5 font-medium text-background transition-opacity hover:opacity-90"
           >
-            Try the demo
+            Connect Steam
           </Link>
         </div>
       </header>
@@ -41,33 +41,34 @@ export default function Home() {
         <section className="flex flex-col items-center pt-24 text-center sm:pt-32">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-elevated px-3 py-1 text-xs text-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            Your intelligent gaming companion
+            Your AI gaming concierge
           </span>
           <h1 className="max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-            Never forget where
+            Can&apos;t decide
             <br />
-            you{" "}
+            what to{" "}
             <span className="bg-gradient-to-r from-accent-soft to-[#38bdf8] bg-clip-text text-transparent">
-              left off
+              play
             </span>
-            .
+            ?
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
-            SideQuest AI remembers your progress across every game, so you can
-            pick up any save exactly where you stopped — no manual journaling.
+            You own 150 games and a free hour, so you scroll, you stall, you
+            launch nothing. SideQuest reads your library and your mood, then
+            picks the one game to play right now.
           </p>
           <div className="mt-9 flex items-center gap-3">
             <Link
-              href="/dashboard"
+              href="/connect"
               className="rounded-xl bg-accent px-5 py-2.5 font-medium text-white shadow-[0_0_30px_rgba(124,92,255,0.45)] transition-transform hover:-translate-y-0.5"
             >
-              Open the demo →
+              Connect your Steam →
             </Link>
             <Link
-              href="/games/elden-ring"
+              href="/play"
               className="rounded-xl border border-border bg-elevated px-5 py-2.5 font-medium text-foreground transition-colors hover:border-border-strong"
             >
-              See a game recap
+              Try it with a sample library
             </Link>
           </div>
         </section>
@@ -87,19 +88,22 @@ export default function Home() {
         <section className="mt-20 mb-24 w-full">
           <div className="card glow-border overflow-hidden p-8 sm:p-12">
             <p className="font-mono text-xs uppercase tracking-widest text-subtle">
-              The loop
+              How it works
             </p>
             <div className="mt-6 grid gap-6 sm:grid-cols-4">
-              {["Play your game", "Drop notes / screenshot", "AI builds the recap", "Resume anytime"].map(
-                (step, i) => (
-                  <div key={step} className="flex flex-col gap-2">
-                    <span className="font-mono text-sm text-accent-soft">
-                      0{i + 1}
-                    </span>
-                    <span className="text-sm text-foreground">{step}</span>
-                  </div>
-                )
-              )}
+              {[
+                "Connect your Steam",
+                "Set your time & mood",
+                "AI picks one game",
+                "Launch and play",
+              ].map((step, i) => (
+                <div key={step} className="flex flex-col gap-2">
+                  <span className="font-mono text-sm text-accent-soft">
+                    0{i + 1}
+                  </span>
+                  <span className="text-sm text-foreground">{step}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>

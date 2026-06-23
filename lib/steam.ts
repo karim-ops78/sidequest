@@ -7,6 +7,8 @@ export type SteamGame = {
   name: string;
   playtimeMin: number;
   coverUrl: string;
+  /** Minutes played in the last 2 weeks (Steam "recently played"). 0 if none. */
+  recentMin?: number;
 };
 
 export type SteamProfile = {
@@ -103,6 +105,57 @@ async function fetchOwnedGames(
     .sort((a: SteamGame, b: SteamGame) => b.playtimeMin - a.playtimeMin);
 }
 
+// Steam's "recently played" — playtime over the last 2 weeks, keyed by appid.
+// This is the strongest "what were you actually into lately" signal. Best-effort:
+// a private/empty result just means no recent-play data, never a hard failure.
+async function fetchRecentlyPlayed(
+  steamId: string,
+  key: string
+): Promise<Map<number, number>> {
+  const map = new Map<number, number>();
+  try {
+    const data = await getJson(
+      `https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key=${key}&steamid=${steamId}&format=json`
+    );
+    const list = data?.response?.games;
+    if (Array.isArray(list)) {
+      for (const g of list as { appid: number; playtime_2weeks?: number }[]) {
+        if (g.appid && g.playtime_2weeks) map.set(g.appid, g.playtime_2weeks);
+      }
+    }
+  } catch {
+    // Ignore — recent-play data is a bonus, not required for import to succeed.
+  }
+  return map;
+}
+
+// Storefront search — used to resolve a game *name* (AI suggestion or manual
+// search) to a real appid + cover. Public endpoint, no API key needed.
+export type StoreHit = { appid: number; name: string; coverUrl: string };
+
+export async function searchStore(term: string, limit = 5): Promise<StoreHit[]> {
+  const q = term.trim();
+  if (!q) return [];
+  try {
+    const data = await getJson(
+      `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(
+        q
+      )}&l=english&cc=US`
+    );
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items
+      .filter((it: { type?: string; id?: number }) => it.type === "app" && it.id)
+      .slice(0, limit)
+      .map((it: { id: number; name: string }): StoreHit => ({
+        appid: it.id,
+        name: it.name,
+        coverUrl: coverFor(it.id),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function importSteamLibrary(
   rawInput: string
 ): Promise<SteamImportResult> {
@@ -127,7 +180,9 @@ export async function importSteamLibrary(
       };
     }
     const games = await fetchOwnedGames(steamId, key);
-    return { ok: true, profile, games, isMock: false };
+    const recent = await fetchRecentlyPlayed(steamId, key);
+    const withRecent = games.map((g) => ({ ...g, recentMin: recent.get(g.appid) ?? 0 }));
+    return { ok: true, profile, games: withRecent, isMock: false };
   } catch (e) {
     return {
       ok: false,
@@ -138,8 +193,8 @@ export async function importSteamLibrary(
 
 // ----- Mock (no API key) -----
 const MOCK_GAMES: SteamGame[] = [
-  { appid: 1086940, name: "Baldur's Gate 3", playtimeMin: 6180, coverUrl: coverFor(1086940) },
-  { appid: 1245620, name: "Elden Ring", playtimeMin: 4720, coverUrl: coverFor(1245620) },
+  { appid: 1086940, name: "Baldur's Gate 3", playtimeMin: 6180, coverUrl: coverFor(1086940), recentMin: 540 },
+  { appid: 1245620, name: "Elden Ring", playtimeMin: 4720, coverUrl: coverFor(1245620), recentMin: 220 },
   { appid: 367520, name: "Hollow Knight", playtimeMin: 1490, coverUrl: coverFor(367520) },
   { appid: 1091500, name: "Cyberpunk 2077", playtimeMin: 320, coverUrl: coverFor(1091500) },
   { appid: 1174180, name: "Red Dead Redemption 2", playtimeMin: 2880, coverUrl: coverFor(1174180) },

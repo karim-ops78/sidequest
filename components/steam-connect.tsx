@@ -1,11 +1,31 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { connectSteam } from "@/app/connect/actions";
-import { formatPlaytime } from "@/lib/seed";
+import { saveLibrary, saveProfile } from "@/lib/library";
+import { AddGames } from "@/components/add-games";
 
 export function SteamConnect({ demoMode = false }: { demoMode?: boolean }) {
   const [state, action, pending] = useActionState(connectSteam, null);
+
+  // Persist the imported library so the picker (/play) can recommend from it.
+  useEffect(() => {
+    if (state?.ok) {
+      saveLibrary(
+        state.games.map((g) => ({
+          appid: g.appid,
+          name: g.name,
+          playtimeMin: g.playtimeMin,
+          coverUrl: g.coverUrl,
+          recentMin: g.recentMin ?? 0,
+        }))
+      );
+      // Keep the SteamID so we can refresh recent-play data later without a re-import.
+      if (!state.isMock && state.profile.steamId) {
+        saveProfile({ steamId: state.profile.steamId });
+      }
+    }
+  }, [state]);
 
   return (
     <div className="space-y-6">
@@ -105,7 +125,7 @@ export function SteamConnect({ demoMode = false }: { demoMode?: boolean }) {
                     <p className="line-clamp-1 text-sm font-medium">{g.name}</p>
                     <p className="mt-1 font-mono text-xs text-subtle">
                       {g.playtimeMin > 0
-                        ? `${formatPlaytime(g.playtimeMin)} played`
+                        ? `${Math.round(g.playtimeMin / 60)}h played`
                         : "never played"}
                     </p>
                   </div>
@@ -114,14 +134,14 @@ export function SteamConnect({ demoMode = false }: { demoMode?: boolean }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-border bg-elevated p-4">
-            <p className="text-sm text-muted">
-              Track these games to start logging sessions and recaps.
-            </p>
-            <button className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90">
-              Track all
-            </button>
-          </div>
+          <AddGames
+            seed={state.games.map((g) => ({
+              appid: g.appid,
+              name: g.name,
+              playtimeMin: g.playtimeMin,
+              coverUrl: g.coverUrl,
+            }))}
+          />
         </div>
       )}
     </div>

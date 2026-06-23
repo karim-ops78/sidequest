@@ -13,15 +13,28 @@ export function Logo({ className = "" }: { className?: string }) {
   );
 }
 
-export function TopNav({ active }: { active?: "library" | "profile" }) {
+export function TopNav({
+  active,
+}: {
+  active?: "play" | "library" | "history" | "profile" | "roast";
+}) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
         <div className="flex items-center gap-8">
           <Logo />
           <nav className="hidden items-center gap-1 sm:flex">
+            <NavLink href="/play" current={active === "play"}>
+              Play
+            </NavLink>
             <NavLink href="/dashboard" current={active === "library"}>
               Library
+            </NavLink>
+            <NavLink href="/history" current={active === "history"}>
+              History
+            </NavLink>
+            <NavLink href="/roast" current={active === "roast"}>
+              Roast
             </NavLink>
             <NavLink href="/profile" current={active === "profile"}>
               Profile

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SideQuest Overlay</title>
+    <style>
+      :root {
+        --bg: #141416;
+        --border: #232326;
+        --border-strong: #2f2f33;
+        --fg: #ededef;
+        --muted: #a1a1aa;
+        --subtle: #6b6b72;
+        --accent: #7c5cff;
+        --accent-soft: #a48bff;
+        --accent-dim: rgba(124, 92, 255, 0.16);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        background: transparent;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        color: var(--fg);
+        user-select: none;
+        overflow: hidden;
+      }
+      body { padding: 12px; }
+
+      .card {
+        background: color-mix(in srgb, var(--bg) 92%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        backdrop-filter: blur(18px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55),
+          0 0 0 1px rgba(124, 92, 255, 0.12);
+        overflow: hidden;
+        -webkit-app-region: drag; /* drag the card to move the overlay */
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+      .game {
+        font-size: 11px; color: var(--accent-soft);
+        background: var(--accent-dim); padding: 2px 8px; border-radius: 999px;
+      }
+      .actions { display: flex; align-items: center; gap: 2px; -webkit-app-region: no-drag; }
+      .close, .iconbtn {
+        -webkit-app-region: no-drag;
+        background: none; border: none; color: var(--subtle);
+        cursor: pointer; font-size: 14px; padding: 2px 7px; border-radius: 6px; line-height: 1;
+      }
+      .close:hover, .iconbtn:hover { color: var(--fg); background: var(--border); }
+
+      /* Collapsed: only the header bar (SideQuest : Game) stays visible. */
+      body.collapsed .body, body.collapsed .foot { display: none; }
+      body.collapsed .head { border-bottom: none; }
+      body.collapsed #min { font-size: 12px; }
+
+      .body { padding: 14px; max-height: 360px; overflow-y: auto; -webkit-app-region: no-drag; }
+      .answer { font-size: 14px; line-height: 1.55; }
+      .steps { list-style: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+      .steps li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted); }
+      .num {
+        flex: none; width: 18px; height: 18px; border-radius: 6px;
+        background: var(--accent-dim); color: var(--accent-soft);
+        font-size: 11px; font-weight: 600; display: grid; place-items: center;
+        font-family: ui-monospace, monospace;
+      }
+
+      .loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+      .spinner {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid var(--border-strong); border-top-color: var(--accent);
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .err { color: #f0a35a; font-size: 13px; line-height: 1.5; }
+      .hint-when { color: var(--subtle); font-size: 12px; }
+
+      .foot { padding: 10px 14px; border-top: 1px solid var(--border); -webkit-app-region: no-drag; }
+      .gamerow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .glabel { font-size: 12px; color: var(--subtle); white-space: nowrap; }
+      .gamerow select {
+        flex: 1; background: #0a0a0b; color: var(--fg);
+        border: 1px solid var(--border); border-radius: 10px;
+        padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer;
+      }
+      .gamerow select:focus { border-color: var(--accent); }
+      .sources {
+        margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+        font-size: 11px; color: var(--subtle);
+      }
+      .sources b { color: var(--accent-soft); font-weight: 600; }
+      .ask {
+        display: flex; gap: 8px;
+      }
+      .ask input {
+        flex: 1; background: #0a0a0b; border: 1px solid var(--border);
+        border-radius: 10px; padding: 8px 12px; color: var(--fg); font-size: 13px;
+        outline: none;
+      }
+      .ask input:focus { border-color: var(--accent); }
+      .ask button {
+        background: var(--accent); color: #fff; border: none; border-radius: 10px;
+        padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+      }
+      .ask button:disabled { opacity: 0.6; cursor: default; }
+      .binds { margin-top: 8px; font-size: 11px; color: var(--subtle); font-family: ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="head">
+        <div class="brand"><span class="dot"></span> <span id="brandText">SideQuest</span> <span id="game" class="game" style="display:none"></span></div>
+        <div class="actions">
+          <button class="iconbtn" id="min" title="Minimize">–</button>
+          <button class="close" id="close" title="Hide (Ctrl+Shift+K)">✕</button>
+        </div>
+      </div>
+      <div class="body" id="body">
+        <div class="hint-when">
+          Pick your game below, then ask a question (e.g. "how do I beat this boss?")
+          for wiki-grounded help — or press <b>Ctrl+Shift+H</b> for a quick read of your screen.
+        </div>
+      </div>
+      <div class="foot">
+        <div class="gamerow">
+          <span class="glabel">🎮 Game</span>
+          <select id="gamesel"></select>
+        </div>
+        <div class="ask">
+          <input id="q" type="text" placeholder="Ask about this game…" autocomplete="off" />
+          <button id="send">Ask</button>
+        </div>
+        <div class="binds">Ctrl+Shift+H help · Ctrl+Shift+J ask · Ctrl+Shift+K hide</div>
+      </div>
+    </div>
+
+    <script>
+      const body = document.getElementById("body");
+      const gameTag = document.getElementById("game");
+      const brandText = document.getElementById("brandText");
+      const minBtn = document.getElementById("min");
+      const q = document.getElementById("q");
+      const send = document.getElementById("send");
+
+      let collapsed = false;
+      let currentGame = "";
+
+      function applyHeader() {
+        if (collapsed) {
+          gameTag.style.display = "none";
+          brandText.textContent = currentGame
+            ? "SideQuest : " + currentGame
+            : "SideQuest";
+        } else {
+          brandText.textContent = "SideQuest";
+          if (currentGame) {
+            gameTag.textContent = currentGame;
+            gameTag.style.display = "";
+          } else {
+            gameTag.style.display = "none";
+          }
+        }
+      }
+
+      function setGame(name) {
+        currentGame = name && name !== "Unknown" ? name : "";
+        applyHeader();
+      }
+
+      function setCollapsed(v) {
+        collapsed = v;
+        document.body.classList.toggle("collapsed", v);
+        minBtn.textContent = v ? "⤢" : "–";
+        minBtn.title = v ? "Expand" : "Minimize";
+        applyHeader();
+        window.sidequest.setCollapsed(v);
+      }
+
+      minBtn.addEventListener("click", () => setCollapsed(!collapsed));
+
+      // ----- Game selector -----
+      const gamesel = document.getElementById("gamesel");
+      (async () => {
+        const { games, currentId } = await window.sidequest.getGames();
+        gamesel.innerHTML =
+          '<option value="">— Not set —</option>' +
+          games
+            .map(
+              (g) =>
+                '<option value="' + g.id + '">' + escapeHtml(g.name) + "</option>"
+            )
+            .join("");
+        gamesel.value = currentId || "";
+        if (currentId) {
+          const sel = games.find((g) => g.id === currentId);
+          if (sel) setGame(sel.name);
+        }
+      })();
+      gamesel.addEventListener("change", async () => {
+        const name = await window.sidequest.setGame(gamesel.value);
+        setGame(gamesel.value ? name : "");
+      });
+
+      function renderLoading(question) {
+        body.innerHTML =
+          '<div class="loading"><span class="spinner"></span>' +
+          (question ? "Searching the wiki + thinking…" : "Reading your screen…") +
+          "</div>";
+      }
+
+      function renderResult(r) {
+        setGame(r.game);
+        let html = '<div class="answer">' + escapeHtml(r.answer) + "</div>";
+        if (r.steps && r.steps.length) {
+          html += '<ul class="steps">';
+          r.steps.forEach((s, i) => {
+            html +=
+              '<li><span class="num">' + (i + 1) + "</span><span>" + escapeHtml(s) + "</span></li>";
+          });
+          html += "</ul>";
+        }
+        if (r.sources && r.sources.length) {
+          html +=
+            '<div class="sources">📖 Grounded on wiki: <b>' +
+            r.sources.map(escapeHtml).join("</b>, <b>") +
+            "</b></div>";
+        }
+        body.innerHTML = html;
+      }
+
+      function renderError(msg) {
+        setGame("");
+        body.innerHTML = '<div class="err">⚠ ' + escapeHtml(msg) + "</div>";
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        }[c]));
+      }
+
+      async function ask() {
+        const question = q.value.trim();
+        send.disabled = true;
+        await window.sidequest.ask(question);
+        q.value = "";
+        send.disabled = false;
+      }
+
+      send.addEventListener("click", ask);
+      q.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") ask();
+        if (e.key === "Escape") window.sidequest.hide();
+      });
+      document.getElementById("close").addEventListener("click", () => window.sidequest.hide());
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") window.sidequest.hide();
+      });
+      // Clicking anywhere in the overlay means the user wants to interact → take focus.
+      window.addEventListener("mousedown", () => window.sidequest.focusOverlay());
+
+      window.sidequest.onLoading((d) => {
+        if (collapsed) setCollapsed(false); // a new request → expand to show it
+        if (d.game) setGame(d.game);
+        renderLoading(d.question);
+      });
+      window.sidequest.onResult(renderResult);
+      window.sidequest.onError(renderError);
+      window.sidequest.onFocusInput(() => q.focus());
+    </script>
+  </body>
+</html>

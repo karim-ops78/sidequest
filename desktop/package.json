@@ -1,0 +1,14 @@
+{
+  "name": "sidequest-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SideQuest in-game overlay companion (Electron)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "make-icon": "node generate-icon.js"
+  },
+  "devDependencies": {
+    "electron": "latest"
+  }
+}

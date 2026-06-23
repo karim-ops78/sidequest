@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SideQuest AI 🎮
 
-## Getting Started
+> **Never forget where you left off.**
+> An intelligent gaming companion that logs your sessions and generates AI
+> progress summaries — so you can pick up any game right where you stopped.
 
-First, run the development server:
+SideQuest connects to your game library, keeps a timeline of your play sessions,
+and uses AI to summarize *what you were doing* and *what's next* — so coming back
+to a game after weeks away takes seconds, not a frustrating "wait, where was I?".
+
+🔗 Try the demo: a public, pre-filled account is available — no signup required.
+
+## Features
+
+- **Steam library import** — bring in your games and playtime via your SteamID64.
+- **Resume my game** — AI-generated progress summaries tell you exactly where you left off.
+- **Session timeline** — every session logged, per game.
+- **Smart recommender** — "What should I play this weekend?" based on your library and mood.
+- **Profile & stats** — your gaming identity at a glance.
+- **Roast mode** — a playful AI take on your gaming habits.
+- **Desktop overlay** *(in progress)* — a lightweight Electron overlay that runs alongside your games.
+
+> 🔒 **Privacy:** screenshots are never stored. They're sent to the vision model
+> in memory and discarded — only the text summary is kept.
+
+## Tech stack
+
+- **Web:** Next.js 16 (App Router, Server Actions), React 19, TypeScript, Tailwind v4
+- **Backend / data:** Supabase (PostgreSQL, Auth, Row-Level Security)
+- **AI:** vision + text models, called server-side (keys never exposed to the client)
+- **Desktop:** Electron overlay
+- **Deploy:** Vercel + Supabase
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in your Supabase + API keys
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Desktop overlay
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd desktop
+npm install
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+app/          Routes — connect (Steam), dashboard, play, history, profile, roast
+components/   UI — picker, library-view, steam-connect, roast, ...
+lib/          Shared logic & data
+desktop/      Electron desktop overlay
+public/       Static assets
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Status
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+V1, work in progress — built by [Karim](https://github.com/karim-ops78).
+Web-first, with the desktop overlay rolling out next.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All rights reserved.
